@@ -21,33 +21,33 @@ for (x,y,w,h) in faces:
 
 # cv2.imshow('plates',plate)
 
-edges = cv2.Canny(plate, 100, 200)
-# cv2.imshow('edges', edges)
+# edges = cv2.Canny(plate, 100, 200)
+# # cv2.imshow('edges', edges)
 
-def sobel_edge_detection(image):
-    sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Sobel along X-axis
-    sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)  # Sobel along Y-axis
-    sobel = cv2.magnitude(sobel_x, sobel_y)  # Magnitude of the gradient
-    return sobel
+# def sobel_edge_detection(image):
+#     sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Sobel along X-axis
+#     sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)  # Sobel along Y-axis
+#     sobel = cv2.magnitude(sobel_x, sobel_y)  # Magnitude of the gradient
+#     return sobel
 
-def prewitt_edge_detection(image):
-    prewitt_x = filters.prewitt_h(image)  # Prewitt along X-axis
-    prewitt_y = filters.prewitt_v(image)  # Prewitt along Y-axis
-    prewitt = np.sqrt(prewitt_x**2 + prewitt_y**2)  # Magnitude of the gradient
-    return prewitt
+# def prewitt_edge_detection(image):
+#     prewitt_x = filters.prewitt_h(image)  # Prewitt along X-axis
+#     prewitt_y = filters.prewitt_v(image)  # Prewitt along Y-axis
+#     prewitt = np.sqrt(prewitt_x**2 + prewitt_y**2)  # Magnitude of the gradient
+#     return prewitt
+
+# sobel_edges = sobel_edge_detection(plate)
+# # cv2.imshow('Sobel', sobel_edges)
+
+# prewitt_edges = prewitt_edge_detection(plate)
+# # cv2.imshow('Prewitt', prewitt_edges)
 
 def roberts_edge_detection(image):
     roberts = filters.roberts(image)  # Roberts edge detection
     return roberts
 
-sobel_edges = sobel_edge_detection(plate)
-# cv2.imshow('Sobel', sobel_edges)
-
-prewitt_edges = prewitt_edge_detection(plate)
-# cv2.imshow('Prewitt', prewitt_edges)
-
 robert_edges = roberts_edge_detection(plate)
-cv2.imshow( 'Robert', robert_edges)
+# cv2.imshow( 'Robert', robert_edges)
 
 # Convert the plate to a format suitable for OCR
 plate_for_ocr = cv2.cvtColor(plate, cv2.COLOR_GRAY2BGR)
@@ -57,5 +57,5 @@ text = reader.readtext(plate_for_ocr)
 
 print("Detected Number:", text)
 
-if cv2.waitKey(0) & 0xFF == ord('q'):
-    cv2.destroyAllWindows()
+# if cv2.waitKey(0) & 0xFF == ord('q'):
+#     cv2.destroyAllWindows()
