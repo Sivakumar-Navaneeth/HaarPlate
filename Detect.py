@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from skimage import filters
 from skimage import io, color
-import pytesseract
 import easyocr
 
 reader = easyocr.Reader(['en'])
@@ -52,7 +51,7 @@ robert_edges = roberts_edge_detection(plate)
 # Convert the plate to a format suitable for OCR
 plate_for_ocr = cv2.cvtColor(plate, cv2.COLOR_GRAY2BGR)
 
-# Use Tesseract to do OCR on the plate
+# do OCR on the plate
 text = reader.readtext(plate_for_ocr)
 
 print("Detected Number:", text)
