@@ -11,7 +11,9 @@ import streamlit as st
 from azure.storage.blob import BlobServiceClient as bsc
 from PIL import Image
 from pymongo import MongoClient as mc
-from ultralytics import YOLO
+#from ultralytics import YOLO
+import numpy as np
+from skimage import filters
 
 import config
 
@@ -25,15 +27,11 @@ container_client = blob_s_c.get_container_client(container=container_name)
 md_client = mc(config.MONGO_DATABASE_CONNECTION_STRING)
 db=md_client.raspimg
 
-model_weights = 'best.pt'
-model = YOLO(model_weights, task='predict')
+PlateCascade = cv2.CascadeClassifier('haarcascade_russian_plate_number.xml')
 reader = easyocr.Reader(['en'])
-
-
 
 # Function to send email
 def send_email(plate_no=None):
-    
     # Email credentials
     sender_email = config.EMAIL_ID
     sender_password = config.EMAIL_APPLICATION_PSWD
@@ -72,45 +70,63 @@ def send_email(plate_no=None):
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
 
-import numpy as np
-
-
-def anpr(frame):
-    # Convert the JpegImageFile object to a NumPy array
-    frame_array = np.array(frame)
+# def yolo_method(frame):
+#     # Convert the JpegImageFile object to a NumPy array
+#     frame_array = np.array(frame)
     
-    results = model(frame_array)
-    s = ''
-    for r in results:
-        boxes = r.boxes
-        for box in boxes:
-            # bounding box
-            x1, y1, x2, y2 = box.xyxy[0]
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2) # convert to int values
-            pt1 = (x1, y1)
-            pt2 = (x2, y2)
-            roi = frame_array[pt1[1]:pt2[1], pt1[0]:pt2[0]]
-            text = reader.readtext(roi)
-            for i in text:
-                s=s+i[1]
-                s = s.replace(" ", "")
-            s=s.upper()
-            # put box in cam
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 1
-            font_color = (255, 255, 255)  # White color in BGR format
-            thickness = 2
+#     results = model(frame_array)
+#     s = ''
+#     for r in results:
+#         boxes = r.boxes
+#         for box in boxes:
+#             # bounding box
+#             x1, y1, x2, y2 = box.xyxy[0]
+#             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2) # convert to int values
+#             pt1 = (x1, y1)
+#             pt2 = (x2, y2)
+#             roi = frame_array[pt1[1]:pt2[1], pt1[0]:pt2[0]]
+#             text = reader.readtext(roi)
+#             for i in text:
+#                 s=s+i[1]
+#                 s = s.replace(" ", "")
+#             s=s.upper()
+#             # put box in cam
+#             font = cv2.FONT_HERSHEY_SIMPLEX
+#             font_scale = 1
+#             font_color = (255, 255, 255)  # White color in BGR format
+#             thickness = 2
             
-            # Write the text on the frame
-            cv2.putText(frame_array, s, (x1, y1), font, font_scale, font_color, thickness)
+#             # Write the text on the frame
+#             cv2.putText(frame_array, s, (x1, y1), font, font_scale, font_color, thickness)
 
-            cv2.rectangle(frame_array, (x1, y1), (x2, y2), (255, 0, 255), 3)
+#             cv2.rectangle(frame_array, (x1, y1), (x2, y2), (255, 0, 255), 3)
     
-    # Convert the NumPy array back to an image
-    result_image = Image.fromarray(frame_array)
+#     # Convert the NumPy array back to an image
+#     result_image = Image.fromarray(frame_array)
     
-    return result_image, s
+#     return result_image, s
 
+
+def plate_detect(image):
+    #Harr Cascade
+    faces = PlateCascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors = 10, minSize=(25,25))
+    for (x,y,w,h) in faces:
+        cv2.rectangle(gray,(x,y),(x+w,y+h),(255,0,0),2)
+        plate = gray[y: y+h, x:x+w]
+        gray[y: y+h, x:x+w] = plate
+    result_image=plate
+
+    #Robert Edge Detection for improved accuracy
+    def roberts_edge_detection(image):
+        roberts = filters.roberts(image)  # Roberts edge detection
+        return roberts
+    robert_edges = roberts_edge_detection(plate)
+
+    #OCR for text extraction
+    plate_for_ocr = cv2.cvtColor(robert_edges, cv2.COLOR_GRAY2BGR)
+    car_number = reader.readtext(plate_for_ocr)
+
+    return result_image, car_number
 
 
 if __name__=="__main__":
@@ -123,7 +139,7 @@ if __name__=="__main__":
     image = Image.open(BytesIO(response.content))
 
     #call prediction function
-    image,plate_no=anpr(image)
+    image,plate_no=plate_detect(image)
 
     st.title(plate_no)
     st.image(image, caption='Captured Image', use_column_width=True)

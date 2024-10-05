@@ -4,7 +4,7 @@ import time
 import cv2
 import numpy as np
 from azure.storage.blob import BlobServiceClient
-from pymongo import MongoClient
+from pymongo import MongoClient as mc
 
 import config
 
