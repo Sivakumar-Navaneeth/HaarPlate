@@ -106,27 +106,35 @@ def send_email(plate_no=None):
     
 #     return result_image, s
 
+#Robert Edge Detection for improved accuracy
+def roberts_edge_detection(image):
+    roberts = filters.roberts(image)  # Roberts edge detection
+    return roberts
 
 def plate_detect(image):
+    frame_array = np.array(image)
+    gray = cv2.cvtColor(frame_array, cv2.COLOR_BGR2GRAY)
     #Harr Cascade
     faces = PlateCascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors = 10, minSize=(25,25))
+    
     for (x,y,w,h) in faces:
         cv2.rectangle(gray,(x,y),(x+w,y+h),(255,0,0),2)
         plate = gray[y: y+h, x:x+w]
         gray[y: y+h, x:x+w] = plate
-    result_image=plate
 
-    #Robert Edge Detection for improved accuracy
-    def roberts_edge_detection(image):
-        roberts = filters.roberts(image)  # Roberts edge detection
-        return roberts
+    try:
+        check=plate
+    except:
+        return image, 'No plate detected'
+
+    #Robert Edge detection
     robert_edges = roberts_edge_detection(plate)
 
     #OCR for text extraction
-    plate_for_ocr = cv2.cvtColor(robert_edges, cv2.COLOR_GRAY2BGR)
+    plate_for_ocr = cv2.cvtColor(plate, cv2.COLOR_GRAY2BGR)
     car_number = reader.readtext(plate_for_ocr)
 
-    return result_image, car_number
+    return plate_for_ocr, car_number
 
 
 if __name__=="__main__":
@@ -143,8 +151,9 @@ if __name__=="__main__":
 
     st.title(plate_no)
     st.image(image, caption='Captured Image', use_column_width=True)
-    if(plate_no!=''):
-        send_email(plate_no)
+
+    # if(plate_no!=''):
+    #     send_email(plate_no)
 
     time.sleep(5)
-    st.experimental_rerun()
+    st.rerun()

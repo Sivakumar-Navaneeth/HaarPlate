@@ -49,8 +49,8 @@ try:
         time.sleep(5)
 
         # Optional: break loop after pressing 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
 finally:
     cap.release()
